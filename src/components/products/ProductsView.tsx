@@ -71,20 +71,20 @@ export function ProductsView({
   }, [products, searchTerm, selectedCategory, statusFilter]);
 
   return (
-    <div className="h-full flex flex-col gap-3 overflow-hidden">
-      {/* Header with Back button and Actions */}
+    <div className="h-full flex flex-col gap-2.5 overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant="outline"
             onClick={onBackToHome}
-            className="h-8 px-2.5 text-xs gap-1.5"
+            className="h-7 px-2 text-xs gap-1"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back</span>
+            <span>Home</span>
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
+          <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-50">
             Products ({products.length})
           </h1>
         </div>
@@ -92,29 +92,29 @@ export function ProductsView({
         <Button
           size="sm"
           onClick={() => onOpenProductModal()}
-          className="h-8 text-xs bg-slate-900 hover:bg-slate-800 text-white px-2.5"
+          className="h-7 text-xs bg-slate-900 hover:bg-slate-800 text-white px-2.5"
         >
           <Plus className="w-3.5 h-3.5 mr-1" />
-          Add Product
+          Product
         </Button>
       </div>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-wrap items-center gap-2 shrink-0">
-        <div className="flex-1 min-w-[200px] max-w-xs relative">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+        <div className="flex-1 min-w-[160px] max-w-xs relative">
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400 pointer-events-none" />
           <Input
-            placeholder="Search SKU or name..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-8 pl-8 text-xs"
+            className="h-7 pl-8 text-xs"
           />
         </div>
 
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs shadow-xs focus-visible:outline-none dark:border-slate-800 dark:bg-slate-950"
+          className="h-7 rounded border border-slate-200 bg-white px-2 text-xs shadow-xs focus-visible:outline-none dark:border-slate-800 dark:bg-slate-950"
         >
           <option value="ALL">All Categories</option>
           {categories.map((c) => (
@@ -124,12 +124,12 @@ export function ProductsView({
           ))}
         </select>
 
-        <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-xs dark:border-slate-800 dark:bg-slate-950">
+        <div className="inline-flex rounded border border-slate-200 bg-white p-0.5 text-xs dark:border-slate-800 dark:bg-slate-950">
           {(["ALL", "IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                 statusFilter === filter
                   ? "bg-slate-100 text-slate-900 font-semibold dark:bg-slate-800 dark:text-slate-100"
                   : "text-slate-500 hover:text-slate-900"
@@ -141,25 +141,25 @@ export function ProductsView({
         </div>
       </div>
 
-      {/* Table Container (Fits remaining height without page scrolling) */}
-      <div className="flex-1 min-h-0 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 overflow-hidden flex flex-col">
+      {/* Table Container */}
+      <div className="flex-1 min-h-0 rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-white dark:bg-slate-950 z-10 shadow-xs">
-              <TableRow className="h-8">
-                <TableHead className="py-2 text-[11px]">Product</TableHead>
-                <TableHead className="py-2 text-[11px]">Category</TableHead>
-                <TableHead className="py-2 text-[11px]">Stock</TableHead>
-                <TableHead className="py-2 text-[11px]">Price</TableHead>
-                <TableHead className="py-2 text-[11px]">Location</TableHead>
-                <TableHead className="py-2 text-[11px] text-right">Actions</TableHead>
+              <TableRow className="h-7">
+                <TableHead className="py-1.5 text-[10px]">Product</TableHead>
+                <TableHead className="py-1.5 text-[10px]">Category</TableHead>
+                <TableHead className="py-1.5 text-[10px]">Stock</TableHead>
+                <TableHead className="py-1.5 text-[10px]">Price</TableHead>
+                <TableHead className="py-1.5 text-[10px]">Location</TableHead>
+                <TableHead className="py-1.5 text-[10px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-xs text-slate-400">
-                    No products found.
+                  <TableCell colSpan={6} className="h-28 text-center text-xs text-slate-400">
+                    No products.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -168,8 +168,8 @@ export function ProductsView({
                   const isLowStock = !isOutOfStock && p.current_stock <= p.min_threshold;
 
                   return (
-                    <TableRow key={p.id} className="h-10 hover:bg-slate-50/70">
-                      <TableCell className="py-2">
+                    <TableRow key={p.id} className="h-9 hover:bg-slate-50/70">
+                      <TableCell className="py-1.5">
                         <div className="font-semibold text-xs text-slate-900 dark:text-slate-100">
                           {p.name}
                         </div>
@@ -178,43 +178,41 @@ export function ProductsView({
                         </div>
                       </TableCell>
 
-                      <TableCell className="py-2">
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {p.category?.name || "-"}
-                        </span>
+                      <TableCell className="py-1.5 text-xs text-slate-600 dark:text-slate-400">
+                        {p.category?.name || "-"}
                       </TableCell>
 
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-1.5">
+                      <TableCell className="py-1.5">
+                        <div className="flex items-center gap-1">
                           <span className="font-mono font-bold text-xs">{p.current_stock}</span>
                           <span className="text-[10px] text-slate-400">{p.unit}</span>
                           {isOutOfStock ? (
-                            <Badge variant="destructive" className="text-[9px] py-0 px-1">Out</Badge>
+                            <Badge variant="destructive" className="text-[8px] py-0 px-1">Out</Badge>
                           ) : isLowStock ? (
-                            <Badge variant="warning" className="text-[9px] py-0 px-1">Low</Badge>
+                            <Badge variant="warning" className="text-[8px] py-0 px-1">Low</Badge>
                           ) : (
-                            <Badge variant="success" className="text-[9px] py-0 px-1">OK</Badge>
+                            <Badge variant="success" className="text-[8px] py-0 px-1">OK</Badge>
                           )}
                         </div>
                       </TableCell>
 
-                      <TableCell className="py-2 text-xs">
+                      <TableCell className="py-1.5 text-xs">
                         <span className="font-semibold">{formatCurrency(p.selling_price)}</span>
                         <span className="text-[10px] text-slate-400 ml-1">({formatCurrency(p.cost_price)})</span>
                       </TableCell>
 
-                      <TableCell className="py-2 text-xs text-slate-500">
+                      <TableCell className="py-1.5 text-xs text-slate-500">
                         {p.location || "-"}
                       </TableCell>
 
-                      <TableCell className="py-2 text-right">
+                      <TableCell className="py-1.5 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => onOpenMovementModal(p.id, "IN")}
-                            className="h-7 w-7 p-0 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                            title="Stock In"
+                            className="h-6 w-6 p-0 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                            title="In"
                           >
                             <ArrowDownLeft className="w-3 h-3" />
                           </Button>
@@ -223,8 +221,8 @@ export function ProductsView({
                             variant="outline"
                             onClick={() => onOpenMovementModal(p.id, "OUT")}
                             disabled={p.current_stock === 0}
-                            className="h-7 w-7 p-0 text-rose-600 border-rose-200 hover:bg-rose-50 disabled:opacity-30"
-                            title="Stock Out"
+                            className="h-6 w-6 p-0 text-rose-600 border-rose-200 hover:bg-rose-50 disabled:opacity-30"
+                            title="Out"
                           >
                             <ArrowUpRight className="w-3 h-3" />
                           </Button>
@@ -232,7 +230,7 @@ export function ProductsView({
                             size="sm"
                             variant="ghost"
                             onClick={() => onOpenHistoryModal(p)}
-                            className="h-7 w-7 p-0 text-slate-500"
+                            className="h-6 w-6 p-0 text-slate-500"
                             title="History"
                           >
                             <History className="w-3 h-3" />
@@ -241,7 +239,7 @@ export function ProductsView({
                             size="sm"
                             variant="ghost"
                             onClick={() => onOpenProductModal(p)}
-                            className="h-7 w-7 p-0 text-slate-500"
+                            className="h-6 w-6 p-0 text-slate-500"
                             title="Edit"
                           >
                             <Pencil className="w-3 h-3" />
@@ -252,7 +250,7 @@ export function ProductsView({
                             onClick={() => {
                               if (confirm(`Delete ${p.name}?`)) onDeleteProduct(p.id);
                             }}
-                            className="h-7 w-7 p-0 text-red-500 hover:bg-red-50"
+                            className="h-6 w-6 p-0 text-red-500 hover:bg-red-50"
                             title="Delete"
                           >
                             <Trash2 className="w-3 h-3" />

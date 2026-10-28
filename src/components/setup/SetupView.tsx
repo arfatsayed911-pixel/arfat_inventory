@@ -54,8 +54,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3005`;
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back</span>
           </Button>
-          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            System & Deployment
+          <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Arfat System & Deployment
           </h1>
         </div>
 

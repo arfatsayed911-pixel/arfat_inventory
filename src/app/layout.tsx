@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "StockPulse | Inventory & Stock Management",
-  description: "Modern minimalist Inventory & Stock Management System.",
+  title: "Arfat Inventory",
+  description: "Minimalist Inventory & Stock Management System.",
 };
 
 export default function RootLayout({

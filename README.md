@@ -1,4 +1,4 @@
-# 📦 StockPulse — Modern Inventory & Stock Management System
+# 📦 Arfat Inventory — Modern Inventory & Stock Management System
 
 A minimalist, high-performance, responsive **Inventory & Stock Management System** built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **Supabase (PostgreSQL)**, and **Resend**.
 

@@ -1,5 +1,5 @@
 -- ==============================================================================
--- INVENTORY & STOCK MANAGEMENT SYSTEM - DATABASE SCHEMA (SUPABASE / POSTGRESQL)
+-- ARFAT INVENTORY & STOCK MANAGEMENT SYSTEM - DATABASE SCHEMA (SUPABASE)
 -- ==============================================================================
 
 -- 1. Enable UUID Extension
@@ -128,6 +128,6 @@ INSERT INTO stock_movements (id, product_id, type, quantity, previous_stock, new
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO settings (id, company_name, alert_email, low_stock_auto_alert)
-VALUES ('general', 'Acme Inventory Solutions', 'inventory-alerts@example.com', true)
+VALUES ('general', 'Arfat Inventory', 'inventory-alerts@example.com', true)
 ON CONFLICT (id) DO NOTHING;
 

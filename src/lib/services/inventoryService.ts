@@ -3,9 +3,9 @@ import { Category, Product, StockMovement, MovementType, MovementReason, Invento
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_MOVEMENTS } from "@/lib/data/initialData";
 
 const STORAGE_KEYS = {
-  CATEGORIES: "stockpulse_categories_v1",
-  PRODUCTS: "stockpulse_products_v1",
-  MOVEMENTS: "stockpulse_movements_v1",
+  CATEGORIES: "arfat_categories_v1",
+  PRODUCTS: "arfat_products_v1",
+  MOVEMENTS: "arfat_movements_v1",
 };
 
 export class InventoryService {
