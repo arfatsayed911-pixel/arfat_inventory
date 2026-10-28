@@ -26,7 +26,9 @@ import {
 } from "@/types/inventory";
 
 export default function InventoryApp() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [tabHistory, setTabHistory] = useState<string[]>(["dashboard"]);
   const [loading, setLoading] = useState(true);
 
   // Core Data
@@ -60,6 +62,31 @@ export default function InventoryApp() {
 
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
 
+  // Mark mounted to eliminate hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Navigation handlers with historical Back support
+  const handleNavigate = (tab: string) => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    setTabHistory((prev) => [...prev, tab]);
+  };
+
+  const handleBack = () => {
+    if (tabHistory.length > 1) {
+      const newHistory = [...tabHistory];
+      newHistory.pop(); // Remove current
+      const previousTab = newHistory[newHistory.length - 1] || "dashboard";
+      setTabHistory(newHistory);
+      setActiveTab(previousTab);
+    } else {
+      setActiveTab("dashboard");
+      setTabHistory(["dashboard"]);
+    }
+  };
+
   // Load all data
   const loadData = useCallback(async () => {
     try {
@@ -84,8 +111,10 @@ export default function InventoryApp() {
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (mounted) {
+      loadData();
+    }
+  }, [mounted, loadData]);
 
   // Product Actions
   const handleOpenProductModal = (product?: Product) => {
@@ -139,33 +168,34 @@ export default function InventoryApp() {
     await loadData();
   };
 
-  // Demo Reset
-  const handleResetDemo = () => {
-    if (confirm("Reset local inventory back to default sample items & movement history?")) {
-      InventoryService.resetToDemoData();
-      loadData();
-    }
-  };
+  if (!mounted) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-slate-100" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950">
-      {/* Top Navigation */}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50/70 dark:bg-slate-950">
+      {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onNavigate={handleNavigate}
+        onBack={handleBack}
+        canGoBack={activeTab !== "dashboard" || tabHistory.length > 1}
         lowStockCount={lowStockItems.length}
         onOpenAlerts={() => setAlertsModalOpen(true)}
         isSupabaseLive={isSupabaseConfigured}
-        onResetData={handleResetDemo}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Single-Screen Content (No page scrolling) */}
+      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-4 flex flex-col overflow-hidden">
         {loading ? (
-          <div className="flex h-64 items-center justify-center">
+          <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-2">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent mx-auto dark:border-slate-100" />
-              <p className="text-xs text-slate-500">Loading inventory system...</p>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent mx-auto dark:border-slate-100" />
+              <p className="text-xs text-slate-400">Loading...</p>
             </div>
           </div>
         ) : (
@@ -178,7 +208,7 @@ export default function InventoryApp() {
                 onOpenProductModal={() => handleOpenProductModal()}
                 onOpenMovementModal={(type) => handleOpenMovementModal(undefined, type || "IN")}
                 onOpenAlertsModal={() => setAlertsModalOpen(true)}
-                onNavigateToTab={setActiveTab}
+                onNavigateToTab={handleNavigate}
               />
             )}
 
@@ -186,6 +216,7 @@ export default function InventoryApp() {
               <ProductsView
                 products={products}
                 categories={categories}
+                onBackToHome={handleBack}
                 onOpenProductModal={handleOpenProductModal}
                 onOpenMovementModal={handleOpenMovementModal}
                 onOpenHistoryModal={handleOpenHistoryModal}
@@ -196,6 +227,7 @@ export default function InventoryApp() {
             {activeTab === "movements" && (
               <MovementsView
                 movements={movements}
+                onBackToHome={handleBack}
                 onOpenMovementModal={handleOpenMovementModal}
               />
             )}
@@ -204,6 +236,7 @@ export default function InventoryApp() {
               <CategoriesView
                 categories={categories}
                 products={products}
+                onBackToHome={handleBack}
                 onCreateCategory={handleCreateCategory}
                 onDeleteCategory={handleDeleteCategory}
               />
@@ -216,12 +249,14 @@ export default function InventoryApp() {
                 movements={movements}
                 stats={stats}
                 lowStockItems={lowStockItems}
+                onBackToHome={handleBack}
               />
             )}
 
             {activeTab === "deployment" && (
               <SetupView
                 isSupabaseLive={isSupabaseConfigured}
+                onBackToHome={handleBack}
                 onOpenAlertsModal={() => setAlertsModalOpen(true)}
               />
             )}
@@ -229,25 +264,7 @@ export default function InventoryApp() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-6 dark:border-slate-800 dark:bg-slate-950 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">StockPulse</span> &mdash; Modern Inventory & Stock Management System
-          </div>
-          <div className="flex items-center gap-4">
-            <span>Powered by Next.js &bull; Supabase &bull; Resend &bull; Tailwind CSS</span>
-            <button
-              onClick={() => setActiveTab("deployment")}
-              className="text-slate-700 hover:underline dark:text-slate-300 font-medium"
-            >
-              Setup Docs
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      {/* Dialog Modals */}
+      {/* Modals */}
       <ProductFormModal
         open={productModalOpen}
         onOpenChange={setProductModalOpen}
@@ -279,4 +296,3 @@ export default function InventoryApp() {
     </div>
   );
 }
-

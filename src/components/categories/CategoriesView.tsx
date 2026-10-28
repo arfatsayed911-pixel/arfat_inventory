@@ -3,15 +3,16 @@
 import React, { useState } from "react";
 import { Category, Product } from "@/types/inventory";
 import { formatCurrency } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FolderTree, Plus, Trash2, Package } from "lucide-react";
+import { FolderTree, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { CategoryModal } from "./CategoryModal";
 
 interface CategoriesViewProps {
   categories: Category[];
   products: Product[];
+  onBackToHome: () => void;
   onCreateCategory: (cat: { name: string; slug: string; description?: string }) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
 }
@@ -19,19 +20,17 @@ interface CategoriesViewProps {
 export function CategoriesView({
   categories,
   products,
+  onBackToHome,
   onCreateCategory,
   onDeleteCategory,
 }: CategoriesViewProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Group stats by category
   const categoryStats = React.useMemo(() => {
     const map = new Map<string, { count: number; totalCost: number; totalRetail: number }>();
-
     for (const c of categories) {
       map.set(c.id, { count: 0, totalCost: 0, totalRetail: 0 });
     }
-
     for (const p of products) {
       const entry = map.get(p.category_id);
       if (entry) {
@@ -40,93 +39,85 @@ export function CategoriesView({
         entry.totalRetail += (p.selling_price || 0) * (p.current_stock || 0);
       }
     }
-
     return map;
   }, [categories, products]);
 
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col gap-3 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Categories Management
+      <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onBackToHome}
+            className="h-8 px-2.5 text-xs gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
+          </Button>
+          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            Categories ({categories.length})
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Group your products by taxonomy, track category asset values, and maintain clean catalog organization.
-          </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="bg-slate-900 hover:bg-slate-800 text-white">
-          <Plus className="w-4 h-4 mr-2" />
+
+        <Button
+          size="sm"
+          onClick={() => setModalOpen(true)}
+          className="h-8 text-xs bg-slate-900 hover:bg-slate-800 text-white px-2.5"
+        >
+          <Plus className="w-3.5 h-3.5 mr-1" />
           Add Category
         </Button>
       </div>
 
-      {/* Grid of Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Grid of Categories (Contained with internal scroll) */}
+      <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {categories.map((c) => {
           const stats = categoryStats.get(c.id) || { count: 0, totalCost: 0, totalRetail: 0 };
 
           return (
-            <Card key={c.id} className="relative overflow-hidden flex flex-col justify-between">
-              <CardHeader className="pb-3">
+            <Card key={c.id} className="p-3 flex flex-col justify-between">
+              <div>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                      <FolderTree className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">{c.name}</CardTitle>
-                      <span className="text-[11px] font-mono text-slate-400">/{c.slug}</span>
-                    </div>
+                    <FolderTree className="w-4 h-4 text-slate-600" />
+                    <span className="font-semibold text-sm">{c.name}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
                     {stats.count} {stats.count === 1 ? "item" : "items"}
                   </Badge>
                 </div>
                 {c.description && (
-                  <CardDescription className="pt-2 text-xs">
+                  <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
                     {c.description}
-                  </CardDescription>
+                  </p>
                 )}
-              </CardHeader>
+              </div>
 
-              <CardContent className="space-y-2 text-xs pt-0">
-                <div className="rounded-lg bg-slate-50 p-2.5 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex justify-between">
-                  <div>
-                    <span className="text-slate-500 text-[11px] block">Valuation (Cost)</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">
-                      {formatCurrency(stats.totalCost)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-500 text-[11px] block">Retail Potential</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">
-                      {formatCurrency(stats.totalRetail)}
-                    </span>
-                  </div>
+              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 block">Cost Value</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    {formatCurrency(stats.totalCost)}
+                  </span>
                 </div>
-              </CardContent>
-
-              <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
                     if (stats.count > 0) {
-                      alert(`Cannot delete category "${c.name}" because it still has ${stats.count} product(s) assigned.`);
+                      alert(`Category contains ${stats.count} items.`);
                       return;
                     }
-                    if (confirm(`Delete category "${c.name}"?`)) {
-                      onDeleteCategory(c.id);
-                    }
+                    if (confirm(`Delete ${c.name}?`)) onDeleteCategory(c.id);
                   }}
-                  className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                  className="h-6 w-6 p-0 text-red-500 hover:bg-red-50"
+                  title="Delete Category"
                 >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Delete
+                  <Trash2 className="w-3 h-3" />
                 </Button>
-              </CardFooter>
+              </div>
             </Card>
           );
         })}
@@ -140,4 +131,3 @@ export function CategoriesView({
     </div>
   );
 }
-
