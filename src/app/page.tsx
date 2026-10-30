@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
+import { SidePanel } from "@/components/layout/SidePanel";
+import { LoginPage } from "@/components/auth/LoginPage";
+
 import { DashboardView } from "@/components/dashboard/DashboardView";
 import { ProductsView } from "@/components/products/ProductsView";
 import { MovementsView } from "@/components/stock/MovementsView";
@@ -15,6 +18,7 @@ import { ProductHistoryModal } from "@/components/products/ProductHistoryModal";
 import { LowStockNotificationModal } from "@/components/alerts/LowStockNotificationModal";
 
 import { InventoryService } from "@/lib/services/inventoryService";
+import { AuthService, AuthUser } from "@/lib/services/authService";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { 
   Category, 
@@ -27,6 +31,9 @@ import {
 
 export default function InventoryApp() {
   const [mounted, setMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [tabHistory, setTabHistory] = useState<string[]>(["dashboard"]);
   const [loading, setLoading] = useState(true);
@@ -62,9 +69,13 @@ export default function InventoryApp() {
 
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
 
-  // Mark mounted to eliminate hydration mismatch
+  // Initialize Auth
   useEffect(() => {
     setMounted(true);
+    const existingUser = AuthService.getStoredUser();
+    if (existingUser) {
+      setCurrentUser(existingUser);
+    }
   }, []);
 
   // Navigation handlers with historical Back support
@@ -77,7 +88,7 @@ export default function InventoryApp() {
   const handleBack = () => {
     if (tabHistory.length > 1) {
       const newHistory = [...tabHistory];
-      newHistory.pop(); // Remove current
+      newHistory.pop();
       const previousTab = newHistory[newHistory.length - 1] || "dashboard";
       setTabHistory(newHistory);
       setActiveTab(previousTab);
@@ -85,6 +96,13 @@ export default function InventoryApp() {
       setActiveTab("dashboard");
       setTabHistory(["dashboard"]);
     }
+  };
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+    setCurrentUser(null);
+    setActiveTab("dashboard");
+    setTabHistory(["dashboard"]);
   };
 
   // Load all data
@@ -111,10 +129,10 @@ export default function InventoryApp() {
   }, []);
 
   useEffect(() => {
-    if (mounted) {
+    if (mounted && currentUser) {
       loadData();
     }
-  }, [mounted, loadData]);
+  }, [mounted, currentUser, loadData]);
 
   // Product Actions
   const handleOpenProductModal = (product?: Product) => {
@@ -168,6 +186,13 @@ export default function InventoryApp() {
     await loadData();
   };
 
+  const handleResetDemo = () => {
+    if (confirm("Reset local inventory back to default sample items & movements?")) {
+      InventoryService.resetToDemoData();
+      loadData();
+    }
+  };
+
   if (!mounted) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -176,9 +201,21 @@ export default function InventoryApp() {
     );
   }
 
+  // If user is not logged in, show the Login Page
+  if (!currentUser) {
+    return (
+      <LoginPage 
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          loadData();
+        }} 
+      />
+    );
+  }
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50/70 dark:bg-slate-950">
-      {/* Top Navbar */}
+      {/* Top Navbar with Primary Feature Tabs, Back & Logout */}
       <Navbar
         activeTab={activeTab}
         onNavigate={handleNavigate}
@@ -187,82 +224,102 @@ export default function InventoryApp() {
         lowStockCount={lowStockItems.length}
         onOpenAlerts={() => setAlertsModalOpen(true)}
         isSupabaseLive={isSupabaseConfigured}
+        user={currentUser}
+        onLogout={handleLogout}
+        isSidePanelOpen={isSidePanelOpen}
+        onToggleSidePanel={() => setIsSidePanelOpen(!isSidePanelOpen)}
       />
 
-      {/* Main Single-Screen Content (No page scrolling) */}
-      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-4 flex flex-col overflow-hidden">
-        {loading ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent mx-auto dark:border-slate-100" />
-              <p className="text-xs text-slate-400">Loading...</p>
+      {/* Main Container Area with Optional Minor Tools Side Panel */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        
+        {/* Main Feature Viewport (No Scroll on Window) */}
+        <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-4 flex flex-col overflow-hidden">
+          {loading ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-900 border-t-transparent mx-auto dark:border-slate-100" />
+                <p className="text-xs text-slate-400 font-semibold">Loading Arfat Inventory...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            {activeTab === "dashboard" && (
-              <DashboardView
-                stats={stats}
-                lowStockItems={lowStockItems}
-                recentMovements={movements}
-                onOpenProductModal={() => handleOpenProductModal()}
-                onOpenMovementModal={(type) => handleOpenMovementModal(undefined, type || "IN")}
-                onOpenAlertsModal={() => setAlertsModalOpen(true)}
-                onNavigateToTab={handleNavigate}
-              />
-            )}
+          ) : (
+            <>
+              {activeTab === "dashboard" && (
+                <DashboardView
+                  stats={stats}
+                  lowStockItems={lowStockItems}
+                  recentMovements={movements}
+                  onOpenProductModal={() => handleOpenProductModal()}
+                  onOpenMovementModal={(type) => handleOpenMovementModal(undefined, type || "IN")}
+                  onOpenAlertsModal={() => setAlertsModalOpen(true)}
+                  onNavigateToTab={handleNavigate}
+                />
+              )}
 
-            {activeTab === "products" && (
-              <ProductsView
-                products={products}
-                categories={categories}
-                onBackToHome={handleBack}
-                onOpenProductModal={handleOpenProductModal}
-                onOpenMovementModal={handleOpenMovementModal}
-                onOpenHistoryModal={handleOpenHistoryModal}
-                onDeleteProduct={handleDeleteProduct}
-              />
-            )}
+              {activeTab === "products" && (
+                <ProductsView
+                  products={products}
+                  categories={categories}
+                  onBackToHome={handleBack}
+                  onOpenProductModal={handleOpenProductModal}
+                  onOpenMovementModal={handleOpenMovementModal}
+                  onOpenHistoryModal={handleOpenHistoryModal}
+                  onDeleteProduct={handleDeleteProduct}
+                />
+              )}
 
-            {activeTab === "movements" && (
-              <MovementsView
-                movements={movements}
-                onBackToHome={handleBack}
-                onOpenMovementModal={handleOpenMovementModal}
-              />
-            )}
+              {activeTab === "movements" && (
+                <MovementsView
+                  movements={movements}
+                  onBackToHome={handleBack}
+                  onOpenMovementModal={handleOpenMovementModal}
+                />
+              )}
 
-            {activeTab === "categories" && (
-              <CategoriesView
-                categories={categories}
-                products={products}
-                onBackToHome={handleBack}
-                onCreateCategory={handleCreateCategory}
-                onDeleteCategory={handleDeleteCategory}
-              />
-            )}
+              {activeTab === "categories" && (
+                <CategoriesView
+                  categories={categories}
+                  products={products}
+                  onBackToHome={handleBack}
+                  onCreateCategory={handleCreateCategory}
+                  onDeleteCategory={handleDeleteCategory}
+                />
+              )}
 
-            {activeTab === "reports" && (
-              <ReportsView
-                products={products}
-                categories={categories}
-                movements={movements}
-                stats={stats}
-                lowStockItems={lowStockItems}
-                onBackToHome={handleBack}
-              />
-            )}
+              {activeTab === "reports" && (
+                <ReportsView
+                  products={products}
+                  categories={categories}
+                  movements={movements}
+                  stats={stats}
+                  lowStockItems={lowStockItems}
+                  onBackToHome={handleBack}
+                />
+              )}
 
-            {activeTab === "deployment" && (
-              <SetupView
-                isSupabaseLive={isSupabaseConfigured}
-                onBackToHome={handleBack}
-                onOpenAlertsModal={() => setAlertsModalOpen(true)}
-              />
-            )}
-          </>
-        )}
-      </main>
+              {activeTab === "deployment" && (
+                <SetupView
+                  isSupabaseLive={isSupabaseConfigured}
+                  onBackToHome={handleBack}
+                  onOpenAlertsModal={() => setAlertsModalOpen(true)}
+                />
+              )}
+            </>
+          )}
+        </main>
+
+        {/* Side Panel for Minor Features (Categories, Reports, Setup, Tools) */}
+        <SidePanel
+          isOpen={isSidePanelOpen}
+          onClose={() => setIsSidePanelOpen(false)}
+          activeTab={activeTab}
+          onNavigate={handleNavigate}
+          stats={stats}
+          isSupabaseLive={isSupabaseConfigured}
+          onOpenAlerts={() => setAlertsModalOpen(true)}
+          onResetDemo={handleResetDemo}
+        />
+      </div>
 
       {/* Modals */}
       <ProductFormModal
