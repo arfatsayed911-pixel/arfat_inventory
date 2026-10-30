@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Package, Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Package, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthService, AuthUser } from "@/lib/services/authService";
@@ -11,25 +11,30 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
-  const [email, setEmail] = useState("arfatsayed911@gmail.com");
-  const [password, setPassword] = useState("Arfat@3000");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const result = await AuthService.login(email, password);
       if (result.success && result.user) {
         onLoginSuccess(result.user);
       } else {
-        setError(result.error || "Invalid login credentials");
+        setError(result.error || "Invalid login credentials. Please try again.");
       }
     } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred during login");
+      setError(err?.message || "An unexpected error occurred during authentication.");
     } finally {
       setLoading(false);
     }
@@ -48,19 +53,19 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             Arfat Inventory
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Secure Inventory & Stock Management Portal
+            Secure Stock Management & Warehouse Portal
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 text-xs font-medium">
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 text-xs font-semibold">
             {error}
           </div>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Login Form with strict security and clean empty state */}
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Email Address
@@ -70,9 +75,10 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <Input
                 type="email"
                 required
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
+                placeholder="Enter authorized email"
                 className="pl-9 h-9 text-xs"
               />
             </div>
@@ -87,10 +93,11 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <Input
                 type="password"
                 required
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="pl-9 h-9 text-xs"
+                placeholder="Enter password"
+                className="pl-9 h-9 text-xs font-mono"
               />
             </div>
           </div>
@@ -103,32 +110,23 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             {loading ? (
               <span className="flex items-center gap-2">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Signing In...
+                Authenticating...
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                Sign In to Arfat Inventory
+                Sign In to Portal
                 <ArrowRight className="w-4 h-4" />
               </span>
             )}
           </Button>
         </form>
 
-        {/* Security & Quick Fill Badge */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-          <span className="flex items-center gap-1 text-emerald-600 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5" /> Supabase Protected
+        {/* Security Badge */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center text-[11px] text-slate-400">
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            Supabase Protected &bull; Encrypted Session
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail("arfatsayed911@gmail.com");
-              setPassword("Arfat@3000");
-            }}
-            className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline"
-          >
-            Reset Admin Credentials
-          </button>
         </div>
       </div>
     </div>
